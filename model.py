@@ -3,8 +3,9 @@ import os
 from sklearn import preprocessing
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
-# from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score
 import pickle
+import sys
 
 
 #Data Injestion
@@ -42,18 +43,29 @@ X = data.drop(["Survived"], axis=1)
 X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
 
 
-# print(X_val.head(1))
-
 #Train Model
-clr = LogisticRegression(random_state=0, max_iter=1000).fit(X_train, y_train)
+def trainModel(X_train, y_train):
+    clr = LogisticRegression(random_state=0, max_iter=1000).fit(X_train, y_train)
+    pickle.dump(clr, open('model.pkl','wb'))
+    print("Model has been created")
 
-pickle.dump(clr, open('model.pkl','wb'))
 
-# predictions = clr.predict(X_val)
-# submission_preds = clr.predict(test)
+#Test Model
+def testModel(X_val, y_val):
+    try:
+        model = pickle.load(open('model.pkl','rb'))
+        test_prediction = model.predict(X_val)
+        a_score = accuracy_score(y_val, test_prediction)*100
+        if a_score> 70:
+            print("Test is Successful, accuracy was high: {:.2f}%".format(a_score) )
+        else:
+            print("Accuracy is low: {:.2f}%".format(a_score))
+    except:
+        print("Test Fail, model not found")
+        exit(1)
 
-# df = pd.DataFrame({
-#     "PassengerId":test_ids.values,
-#     "Survived": submission_preds})
 
-# df.to_csv("test_submission.csv", index=False)
+if sys.argv[1] == "test":
+    testModel(X_val, y_val)
+else:
+    trainModel(X_train, y_train)
